@@ -1,0 +1,229 @@
+代码示例 1 编译和执行的样例脚本
+#!/bin/bash 
+ 
+# Set the following properties for your environment 
+CDS_HOME="/usr/local/cdshome" 
+CDS_DEPL_NAME="cds" 
+JAVA_HOME="/usr/j2se" 
+ 
+# Set the following parameters for CDSBillingSubscriber 
+clientID="CDSBillingSubscriberUniqueClientID" 
+subName="CDSBillingSubscriberUniqueSubscriptionName" 
+selector="null" 
+durable="false" 
+transactional="false" 
+ 
+# CDSBillingSubscriber Parameter Constants 
+connFactory="cds.messaging.billing.TopicConnectionFactory" 
+topicName="cds.messaging.billingTopic" 
+ 
+# Sun Java System Application Server Parameters 
+jndiCtxFactory="null" 
+providerURL="null" 
+ 
+# BEA WebLogic Parameters 
+# Set the providerURL and WL_HOME 
+# For providerURL use the 
+# WebLogic Application Server host and port 
+#jndiCtxFactory="weblogic.jndi.WLInitialContextFactory" 
+#providerURL="t3://jndihost.domain.com:80" 
+#WL_HOME="/usr/local/bea/weblogic700/server" 
+ 
+# You may select to filter the messages by event. 
+# See the javadoc for javax.jms.Message for more 
+# information on selectors.See the CDS Customization 
+# Guide for a list of possible events. 
+#selector="JMSCorrelationID=download_initiated" 
+ 
+# Directory Constants 
+DEPL_DIR="${CDS_HOME}/deployment/${CDS_DEPL_NAME}" 
+CONF_DIR="${DEPL_DIR}/conf" 
+LIB_DIR="${DEPL_DIR}/lib" 
+CDSLIB_DIR="${LIB_DIR}/cdslib" 
+ 
+# Sun Java System Application Server CLASSPATH Constant 
+COMPILE_LCP=".:${LIB_DIR}/jms.jar" 
+COMPILE_LCP="${COMPILE_LCP}:${CDSLIB_DIR}/cdsapi.jar" 
+COMPILE_LCP="${COMPILE_LCP}:${CDSLIB_DIR}/foundation.jar" 
+EXEC_LCP=".:${LIB_DIR}/jms.jar" 
+EXEC_LCP="${EXEC_LCP}:${CDSLIB_DIR}/cdsapi.jar" 
+EXEC_LCP="${EXEC_LCP}:${CDSLIB_DIR}/foundation.jar" 
+EXEC_LCP="${EXEC_LCP}:${CDSLIB_DIR}/eventserviceclient.jar" 
+EXEC_LCP="${EXEC_LCP}:${LIB_DIR}/imq.jar" 
+EXEC_LCP="${EXEC_LCP}:${LIB_DIR}/fscontext.jar" 
+ 
+# BEA WebLogic CLASSPATH Constant 
+#COMPILE_LCP=".:${LIB_DIR}/jms.jar" 
+#COMPILE_LCP="${COMPILE_LCP}:${CDSLIB_DIR}/cdsapi.jar" 
+#COMPILE_LCP="${COMPILE_LCP}:${CDSLIB_DIR}/foundation.jar" 
+#EXEC_LCP=".:${LIB_DIR}/jms.jar" 
+#EXEC_LCP="${EXEC_LCP}:${CDSLIB_DIR}/cdsapi.jar" 
+#EXEC_LCP="${EXEC_LCP}:${CDSLIB_DIR}/foundation.jar" 
+#EXEC_LCP="${EXEC_LCP}:${CDSLIB_DIR}/eventserviceclient.jar" 
+#EXEC_LCP="${EXEC_LCP}:${WL_HOME}/lib/weblogic.jar" 
+ 
+# Java Command Line Option Constants 
+CDS_OPTS="-Dcds.home=${CDS_HOME}" 
+CDS_OPTS="${CDS_OPTS} -Dcds.config.file=CDS.properties" 
+CDS_OPTS="${CDS_OPTS} -Dcds.config.dir=${CONF_DIR}" 
+ 
+# Compile 
+JAVAC_OPTS="-classpath ${COMPILE_LCP}" 
+JAVAC_OPTS="${JAVAC_OPTS} CDSBillingSubscriber.java" 
+$JAVA_HOME/bin/javac ${JAVAC_OPTS} 
+ 
+# Execute 
+JAVA_OPTS="-cp ${EXEC_LCP} ${CDS_OPTS}" 
+JAVA_OPTS="${JAVA_OPTS} CDSBillingSubscriber" 
+JAVA_OPTS="${JAVA_OPTS} ${clientID}" 
+JAVA_OPTS="${JAVA_OPTS} ${subName}" 
+JAVA_OPTS="${JAVA_OPTS} ${selector}" 
+JAVA_OPTS="${JAVA_OPTS} ${durable}" 
+JAVA_OPTS="${JAVA_OPTS} ${transactional}" 
+JAVA_OPTS="${JAVA_OPTS} ${jndiCtxFactory}" 
+JAVA_OPTS="${JAVA_OPTS} ${connFactory}" 
+JAVA_OPTS="${JAVA_OPTS} ${providerURL}" 
+JAVA_OPTS="${JAVA_OPTS} ${topicName}" 
+$JAVA_HOME/bin/java ${JAVA_OPTS} 
+2.6 示例
+以下代码示例是 CDSBillingSubscriber 类的类定义。此类是如何扩展 AbstractBillingSubscriber 类以实现自己的记帐适配器的样例。
+
+代码示例 2 CDSAbstractBillingSubscriber 样例实现
+import com.sun.content.server.eventservice.subscriber.abs.*; 
+import com.sun.content.server.eventservice.subscriber.util.*; 
+import javax.jms.TextMessage; 
+ 
+public class CDSBillingSubscriber 
+extends CDSAbstractBillingSubscriber 
+{ 
+  public CDSBillingSubscriber( 
+    String clientID, 
+    String subName, 
+    String selector, 
+    boolean durable, 
+    boolean transactional, 
+    String jndiCtxFactory, 
+    String connFactory, 
+    String providerURL, 
+    String topicName) 
+  throws Exception 
+  { 
+    super(clientID, subName, selector, durable, transactional, 
+      jndiCtxFactory, connFactory, providerURL, topicName); 
+  } 
+ 
+  public void handleMsg() 
+  throws CDSEventServiceSubscriberException 
+  { 
+    try 
+    { 
+      // simply prints the message 
+      TextMessage txtMsg = (TextMessage) getMessage(); 
+      System.out.println(txtMsg.getText()); 
+    } 
+    catch (Exception ex) 
+    { 
+      ex.printStackTrace(); 
+    } 
+  } 
+ 
+  public void handleError() 
+  throws CDSEventServiceSubscriberException {} 
+ 
+  private static void displayUsage() 
+  { 
+    System.out.println(); 
+    System.out.print("Usage :java CDSBillingSubscriber "); 
+    System.out.print("clientID subName selector "); 
+    System.out.print("durable transactional "); 
+    System.out.print("jndiCtxFactory connFactory "); 
+    System.out.print("providerURL topicName"); 
+    System.out.println(); 
+    System.out.println(); 
+    System.out.print("For selector, you can specify null or "); 
+    System.out.print("JMSCorrelationID=<event>"); 
+    System.out.println(); 
+    System.out.println(); 
+    System.out.println("\t Terminating Program ..."); 
+    System.exit(-1); 
+  } 
+ 
+  public static void main(String[] args) 
+  { 
+    String clientID = null; 
+    String subName = null; 
+    String selector = null; 
+    boolean durable = false; 
+    boolean transactional = false; 
+    String jndiCtxFactory = null; 
+    String connFactory = null; 
+    String providerURL = null; 
+    String topicName = null; 
+    if (args.length == 9) 
+    { 
+      clientID = args[0]; 
+      subName = args[1]; 
+      selector = args[2]; 
+      durable = Boolean.valueOf(args[3]).booleanValue(); 
+      transactional = Boolean.valueOf(args[4]).booleanValue(); 
+      jndiCtxFactory = args[5]; 
+      connFactory = args[6]; 
+      providerURL = args[7]; 
+      topicName = args[8]; 
+    } 
+    else 
+    { 
+      displayUsage(); 
+    } 
+ 
+    if (selector == null) 
+      selector = null; 
+    else if (selector.trim().length() == 0) 
+      selector = null; 
+    else if (selector.trim().equalsIgnoreCase("null")) 
+      selector = null; 
+ 
+ 
+    CDSBillingSubscriber s = null; 
+    try 
+    { 
+      System.out.println(); 
+      System.out.println("Creating subscriber..."); 
+      s = new CDSBillingSubscriber(clientID, subName, 
+          selector, durable,transactional, jndiCtxFactory, 
+          connFactory, providerURL, topicName); 
+      System.out.println("Subscriber created."); 
+      System.out.println("clientID="+s.getClientID()); 
+      System.out.println("subName="+s.getSubName()); 
+      System.out.println("selector="+s.getSelector()); 
+      System.out.println("durable="+s.isDurable()); 
+      System.out.println("transactional="+s.isTransactional()); 
+      System.out.println("jndiCtxFactory="+s.getJndiCtxFactory()); 
+      System.out.println("connFactory="+s.getConnFactory()); 
+      System.out.println("providerURL="+s.getProviderURL()); 
+      System.out.println("topicName="+s.getTopicName()); 
+ 
+      System.out.println(); 
+      System.out.println("Running for ten minutes..."); 
+      Thread.sleep(600000); 
+      System.out.println("Ten minutes have elapsed."); 
+    } 
+    catch (Exception e) 
+    { 
+      e.printStackTrace(); 
+    } 
+ 
+    try 
+    { 
+      System.out.println(); 
+      System.out.println("Closing connections..."); 
+      if (s != null) 
+        s.getTopicHelper().closeConnections(); 
+      System.out.println("Connections closed"); 
+    } 
+    catch (Exception e) 
+    { 
+      e.printStackTrace(); 
+    } 
+  } 
+} 
